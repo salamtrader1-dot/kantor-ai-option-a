@@ -10,12 +10,14 @@ import { generateMockData, getLeaderboardMetrics } from '@/lib/mockDataGenerator
 import { playSound } from '@/lib/soundEffects';
 import { StafMetric } from '@/lib/types';
 
+type ActivityStatus = 'idle' | 'searching' | 'typing' | 'on_call' | 'celebrating';
+
 export default function Home() {
   const [stafList, setStafList] = useState<StafMetric[]>([]);
   const [mounted, setMounted] = useState(false);
   const [selectedStaf, setSelectedStaf] = useState<string | null>(null);
   const [chatBubbles, setChatBubbles] = useState<Record<string, string>>({});
-  const [stafActivities, setStafActivities] = useState<Record<string, string>>({
+  const [stafActivities, setStafActivities] = useState<Record<string, ActivityStatus>>({
     fathi: 'searching',
     qela: 'typing',
     angel: 'idle',
@@ -75,9 +77,9 @@ export default function Home() {
       const randomActivity =
         activities[Math.floor(Math.random() * activities.length)];
 
-      setStafActivities((prev: Record<string, string>) => ({
+      setStafActivities((prev: Record<string, ActivityStatus>) => ({
         ...prev,
-        [randomRole]: randomActivity,
+        [randomRole]: randomActivity as ActivityStatus,
       }));
 
       // Play sound on activity change
@@ -126,14 +128,14 @@ export default function Home() {
     playSound('approval');
 
     // Trigger celebration animation
-    setStafActivities((prev: Record<string, string>) => ({
+    setStafActivities((prev: Record<string, ActivityStatus>) => ({
       ...prev,
       [roleKey]: 'celebrating',
     }));
 
     // Reset after 2 seconds
     setTimeout(() => {
-      setStafActivities((prev: Record<string, string>) => ({
+      setStafActivities((prev: Record<string, ActivityStatus>) => ({
         ...prev,
         [roleKey]: 'idle',
       }));
