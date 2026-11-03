@@ -223,8 +223,8 @@ class MockSupabaseClient {
         const filtered = this.activities.filter(
           (a) =>
             a.actor.toLowerCase().includes(lowerQuery) ||
-            a.title.toLowerCase().includes(lowerQuery) ||
-            (a.details && a.details.toLowerCase().includes(lowerQuery))
+            a.type.toLowerCase().includes(lowerQuery) ||
+            JSON.stringify(a.data).toLowerCase().includes(lowerQuery)
         );
         resolve(filtered);
       }, 300);
