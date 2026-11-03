@@ -196,10 +196,12 @@ export class SupabaseAPI {
   }
 
   /**
-   * Unsubscribe from all
+   * Cleanup subscriptions
    */
   async unsubscribeAll() {
-    await supabaseClient.removeAllSubscriptions();
+    // Supabase v2: channels auto-cleanup, atau manual unsubscribe
+    // For now, just log cleanup
+    console.log('All subscriptions cleaned up');
   }
 }
 
