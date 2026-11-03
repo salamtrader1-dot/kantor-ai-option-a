@@ -31,7 +31,17 @@ export const useKantorStore = create<KantorStore>((set) => ({
   updateStafMetric: (roleKey, metric) =>
     set((state) => {
       const updated = new Map(state.leaderboard);
-      const current = updated.get(roleKey) || { role_key: roleKey };
+      const current = updated.get(roleKey) || {
+        role_key: roleKey,
+        name: '',
+        emoji: '🤖',
+        rank: 0,
+        primaryCount: 0,
+        primaryLabel: '',
+        subMetrics: [],
+        status: 'idle' as const,
+        statusLabel: '',
+      };
       updated.set(roleKey, { ...current, ...metric });
       return { leaderboard: updated, lastUpdated: new Date() };
     }),
