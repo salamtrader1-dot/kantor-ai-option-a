@@ -125,43 +125,49 @@ export class SupabaseAPI {
   }
 
   /**
-   * Subscribe to real-time activities
+   * Subscribe to real-time activities (Supabase v2 syntax)
    */
   subscribeToActivities(callback: (activity: Activity) => void) {
-    const subscription = supabaseClient
-      .from('activities')
-      .on('INSERT', (payload: any) => {
-        const activity: Activity = {
-          id: payload.new.id,
-          timestamp: new Date(payload.new.created_at),
-          actor: payload.new.actor_key,
-          type: payload.new.activity_type,
-          data: payload.new.details || {},
-          animate: true,
-        };
-        callback(activity);
-      })
+    const channel = supabaseClient.channel('activities-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'activities' },
+        (payload: any) => {
+          const activity: Activity = {
+            id: payload.new.id,
+            timestamp: new Date(payload.new.created_at),
+            actor: payload.new.actor_key,
+            type: payload.new.activity_type,
+            data: payload.new.details || {},
+            animate: true,
+          };
+          callback(activity);
+        }
+      )
       .subscribe((status) => {
-        console.log(`Real-time subscription: ${status}`);
+        console.log(`Activities subscription: ${status}`);
       });
 
-    return subscription;
+    return channel;
   }
 
   /**
-   * Subscribe to performance score updates
+   * Subscribe to performance score updates (Supabase v2 syntax)
    */
   subscribeToScores(callback: (data: any) => void) {
-    const subscription = supabaseClient
-      .from('performance_scores')
-      .on('*', (payload: any) => {
-        callback(payload.new);
-      })
+    const channel = supabaseClient.channel('scores-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'performance_scores' },
+        (payload: any) => {
+          callback(payload.new);
+        }
+      )
       .subscribe((status) => {
         console.log(`Scores subscription: ${status}`);
       });
 
-    return subscription;
+    return channel;
   }
 
   /**
