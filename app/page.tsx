@@ -75,7 +75,7 @@ export default function Home() {
       const randomActivity =
         activities[Math.floor(Math.random() * activities.length)];
 
-      setStafActivities((prev) => ({
+      setStafActivities((prev: Record<string, string>) => ({
         ...prev,
         [randomRole]: randomActivity,
       }));
@@ -99,14 +99,14 @@ export default function Home() {
         salam: '👑 Reviewing...',
       };
 
-      setChatBubbles((prev) => ({
+      setChatBubbles((prev: Record<string, string>) => ({
         ...prev,
         [randomRole]: messages[randomRole] || 'Working...',
       }));
 
       // Remove chat bubble after 2 seconds
       setTimeout(() => {
-        setChatBubbles((prev) => {
+        setChatBubbles((prev: Record<string, string>) => {
           const updated = { ...prev };
           delete updated[randomRole];
           return updated;
@@ -126,14 +126,14 @@ export default function Home() {
     playSound('approval');
 
     // Trigger celebration animation
-    setStafActivities((prev) => ({
+    setStafActivities((prev: Record<string, string>) => ({
       ...prev,
       [roleKey]: 'celebrating',
     }));
 
     // Reset after 2 seconds
     setTimeout(() => {
-      setStafActivities((prev) => ({
+      setStafActivities((prev: Record<string, string>) => ({
         ...prev,
         [roleKey]: 'idle',
       }));
@@ -182,7 +182,7 @@ export default function Home() {
           {/* Left: Leaderboard */}
           <div className="lg:col-span-1">
             <div
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                 const target = e.target as HTMLElement;
                 const card = target.closest('[data-staf]');
                 if (card) {
@@ -193,7 +193,7 @@ export default function Home() {
               className="cursor-pointer"
             >
               <Leaderboard
-                stafList={stafList.map((s) => ({
+                stafList={stafList.map((s: StafMetric) => ({
                   ...s,
                   animating: selectedStaf === s.role_key,
                 }))}
