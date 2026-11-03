@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/Leaderboard';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { OfficeIsometric } from '@/components/OfficeIsometric';
 import { useKantorStore } from '@/lib/store/kantorStore';
 import { generateMockData, getLeaderboardMetrics } from '@/lib/mockDataGenerator';
 import { StafMetric, Activity } from '@/lib/types';
@@ -103,19 +104,17 @@ export default function Home() {
 
           {/* Right: Office + Feed */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Office Placeholder (Day 5+) */}
-            <div
-              className={`${theme === 'dark' ? 'bg-slate-800' : 'bg-white'} rounded-lg p-6 min-h-64 flex items-center justify-center border-2 border-dashed ${theme === 'dark' ? 'border-slate-700' : 'border-slate-300'}`}
-            >
-              <div className="text-center">
-                <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  🏢 3D Isometric Office
-                </p>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'} mt-2`}>
-                  (Coming Day 5-8)
-                </p>
-              </div>
-            </div>
+            {/* Office Isometric */}
+            <OfficeIsometric theme={theme} stafActivities={{
+              fathi: 'searching',
+              qela: 'typing',
+              angel: 'idle',
+              cindy: 'on_call',
+              faza: 'idle',
+              nana: 'idle',
+              cika: 'idle',
+              salam: 'idle',
+            }} />
 
             {/* Activity Feed */}
             <ActivityFeed theme={theme} />
