@@ -4,7 +4,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { Activity } from './types';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -79,7 +78,7 @@ export class SupabaseAPI {
   }
 
   // Real-time subscribe to activities
-  subscribeToActivities(callback: (activity: Activity) => void) {
+  subscribeToActivities(callback: (activity: any) => void) {
     return supabaseClient
       .channel('activities')
       .on(
