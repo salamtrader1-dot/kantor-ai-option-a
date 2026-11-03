@@ -115,7 +115,7 @@ export function generateMockData(startDate: Date, days: number = 7): MockEvent[]
         actor: 'cindy',
         type: 'deal_closed',
         data: {
-          leadId: `${day}-deal-${i}`,
+          leadId: `${day}-deal-${Math.random()}`,
           amount: `Rp ${randomBetween(500, 1000)}jt`,
         },
       });
