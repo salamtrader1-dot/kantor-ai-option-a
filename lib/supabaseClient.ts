@@ -30,7 +30,15 @@ class MockSupabaseClient {
   private initialize() {
     // Generate 7 days of mock data
     const mockEvents = generateMockData(new Date(), 7);
-    this.activities = mockEvents;
+    // Convert MockEvent to Activity
+    this.activities = mockEvents.map((event, idx) => ({
+      id: `activity-${idx}-${Date.now()}`,
+      timestamp: event.timestamp,
+      actor: event.actor,
+      type: event.type,
+      data: event.data,
+      animate: true,
+    }));
 
     // Create staff profiles
     const staffData = [
