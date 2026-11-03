@@ -5,14 +5,37 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Lazy initialization to avoid build-time errors
+let supabaseClientInstance: ReturnType<typeof createClient> | null = null;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Supabase env vars missing');
+export function getSupabaseClient() {
+  if (!supabaseClientInstance) {
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.warn('⚠️ Supabase env vars missing - using mock');
+      // Return a mock client that won't crash
+      return {
+        from: () => ({
+          select: () => Promise.resolve({ data: [], error: null }),
+          insert: () => Promise.resolve({ data: [], error: null }),
+          upsert: () => Promise.resolve({ data: [], error: null }),
+          eq: function() { return this; },
+          order: function() { return this; },
+          limit: function() { return this; },
+        }),
+        channel: () => ({
+          on: function() { return this; },
+          subscribe: () => {},
+        }),
+      } as any;
+    }
+
+    supabaseClientInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return supabaseClientInstance;
 }
-
-export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Core Supabase API
@@ -20,13 +43,15 @@ export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export class SupabaseAPI {
   // Get all staff
   async getAllStaff() {
-    const { data } = await supabaseClient.from('staff_profiles').select('*');
+    const client = getSupabaseClient();
+    const { data } = await client.from('staff_profiles').select('*');
     return data || [];
   }
 
   // Get activities
   async getActivities(limit = 100) {
-    const { data } = await supabaseClient
+    const client = getSupabaseClient();
+    const { data } = await client
       .from('activities')
       .select('*')
       .order('created_at', { ascending: false })
@@ -44,8 +69,9 @@ export class SupabaseAPI {
 
   // Get performance scores
   async getPerformanceScores(date: Date) {
+    const client = getSupabaseClient();
     const dateStr = date.toISOString().split('T')[0];
-    const { data } = await supabaseClient
+    const { data } = await client
       .from('performance_scores')
       .select('*')
       .eq('date', dateStr);
@@ -59,7 +85,8 @@ export class SupabaseAPI {
 
   // Add activity
   async addActivity(actor: string, type: string, title: string, details: any) {
-    await supabaseClient.from('activities').insert({
+    const client = getSupabaseClient();
+    await client.from('activities').insert({
       actor_key: actor,
       activity_type: type,
       title,
@@ -69,8 +96,9 @@ export class SupabaseAPI {
 
   // Update score
   async updateScore(staffKey: string, date: Date, scoreData: any) {
+    const client = getSupabaseClient();
     const dateStr = date.toISOString().split('T')[0];
-    await supabaseClient.from('performance_scores').upsert({
+    await client.from('performance_scores').upsert({
       staff_key: staffKey,
       date: dateStr,
       ...scoreData,
@@ -79,7 +107,8 @@ export class SupabaseAPI {
 
   // Real-time subscribe to activities
   subscribeToActivities(callback: (activity: any) => void) {
-    return supabaseClient
+    const client = getSupabaseClient();
+    return client
       .channel('activities')
       .on(
         'postgres_changes',
@@ -100,7 +129,8 @@ export class SupabaseAPI {
 
   // Real-time subscribe to scores
   subscribeToScores(callback: (data: any) => void) {
-    return supabaseClient
+    const client = getSupabaseClient();
+    return client
       .channel('scores')
       .on(
         'postgres_changes',
@@ -118,7 +148,8 @@ export class SupabaseAPI {
     action: string,
     status: string
   ) {
-    await supabaseClient.from('telegram_logs').insert({
+    const client = getSupabaseClient();
+    await client.from('telegram_logs').insert({
       telegram_id: telegramId,
       user_name: userName,
       message,

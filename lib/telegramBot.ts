@@ -74,7 +74,7 @@ export class TelegramBot {
       case '/status':
         const staff = await supabaseAPI.getAllStaff();
         const message = `👥 Team Status (${staff.length} members):\n${staff
-          .map((s) => `${s.emoji} ${s.name} - ${s.position}`)
+          .map((s: any) => `${s.emoji} ${s.name} - ${s.position}`)
           .join('\n')}`;
         await this.sendMessage(chatId, message);
         break;

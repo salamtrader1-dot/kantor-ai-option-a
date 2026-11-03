@@ -3,14 +3,19 @@
  * Email/Password authentication
  */
 
-import { supabaseClient } from './supabaseAPI';
+import { getSupabaseClient } from './supabaseAPI';
 
 export class AuthService {
+  private static getClient() {
+    return getSupabaseClient();
+  }
+
   /**
    * Sign up new user
    */
   static async signUp(email: string, password: string, fullName: string) {
-    const { data, error } = await supabaseClient.auth.signUp({
+    const client = this.getClient();
+    const { data, error } = await client.auth.signUp({
       email,
       password,
       options: {
@@ -32,7 +37,8 @@ export class AuthService {
    * Sign in with email/password
    */
   static async signIn(email: string, password: string) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
+    const client = this.getClient();
+    const { data, error } = await client.auth.signInWithPassword({
       email,
       password,
     });
@@ -52,7 +58,8 @@ export class AuthService {
    * Sign out
    */
   static async signOut() {
-    const { error } = await supabaseClient.auth.signOut();
+    const client = this.getClient();
+    const { error } = await client.auth.signOut();
     localStorage.removeItem('kantor_session');
     return !error;
   }
@@ -61,7 +68,8 @@ export class AuthService {
    * Get current user
    */
   static async getCurrentUser() {
-    const { data, error } = await supabaseClient.auth.getUser();
+    const client = this.getClient();
+    const { data, error } = await client.auth.getUser();
     return data?.user || null;
   }
 
@@ -69,7 +77,8 @@ export class AuthService {
    * Get session
    */
   static async getSession() {
-    const { data } = await supabaseClient.auth.getSession();
+    const client = this.getClient();
+    const { data } = await client.auth.getSession();
     return data?.session || null;
   }
 
@@ -77,8 +86,9 @@ export class AuthService {
    * Auth state listener
    */
   static onAuthStateChange(callback: (user: any) => void) {
-    const { data: authListener } = supabaseClient.auth.onAuthStateChange(
-      (event, session) => {
+    const client = this.getClient();
+    const { data: authListener } = client.auth.onAuthStateChange(
+      (_event: any, session: any) => {
         callback(session?.user || null);
       }
     );
@@ -90,7 +100,8 @@ export class AuthService {
    * Magic link sign in (passwordless)
    */
   static async signInWithMagicLink(email: string) {
-    const { error } = await supabaseClient.auth.signInWithOtp({
+    const client = this.getClient();
+    const { error } = await client.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
