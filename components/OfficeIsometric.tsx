@@ -4,9 +4,11 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { OfficeFloor } from '@/lib/types';
 
+type ActivityStatus = 'idle' | 'searching' | 'typing' | 'on_call' | 'celebrating';
+
 interface OfficeIsometricProps {
   theme: 'dark' | 'light';
-  stafActivities?: Record<string, string>; // role_key -> activity type
+  stafActivities?: Record<string, ActivityStatus>; // role_key -> activity type
 }
 
 export const OfficeIsometric: React.FC<OfficeIsometricProps> = ({
