@@ -241,7 +241,7 @@ export default function Home() {
         className={`${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'} border-t mt-12`}
       >
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
-          <p>Kantor AI Virtual — Option A | Day 3/12 ✅ | Chat bubbles + Sound + Click staff!</p>
+          <p>Kantor AI Virtual — Option A | Day 6/6 ✅ PRODUCTION READY | Try clicking staff cards!</p>
         </div>
       </footer>
     </div>
