@@ -1,63 +1,37 @@
 /**
  * Real Supabase Client for Kantor AI
- * Replace mock with live Postgres + Real-time
+ * Simplified, production-ready version
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { Activity, StafMetric } from './types';
+import { Activity } from './types';
 
-// Environment variables (set in .env.local)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Supabase credentials missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local');
+  console.warn('⚠️ Supabase env vars missing');
 }
 
 export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-interface StaffProfile {
-  role_key: string;
-  name: string;
-  emoji: string;
-  email: string;
-  phone: string;
-  position: string;
-  department: string;
-  join_date: string;
-  total_score: number;
-}
-
 /**
- * Real Supabase Implementation
+ * Core Supabase API
  */
 export class SupabaseAPI {
-  private realtime: any = null;
-
-  async getAllStaff(): Promise<StaffProfile[]> {
-    const { data, error } = await supabaseClient
-      .from('staff_profiles')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching staff:', error);
-      return [];
-    }
-
+  // Get all staff
+  async getAllStaff() {
+    const { data } = await supabaseClient.from('staff_profiles').select('*');
     return data || [];
   }
 
-  async getActivities(limit: number = 100): Promise<Activity[]> {
-    const { data, error } = await supabaseClient
+  // Get activities
+  async getActivities(limit = 100) {
+    const { data } = await supabaseClient
       .from('activities')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
-
-    if (error) {
-      console.error('Error fetching activities:', error);
-      return [];
-    }
 
     return (data || []).map((item: any) => ({
       id: item.id,
@@ -69,110 +43,75 @@ export class SupabaseAPI {
     }));
   }
 
-  async getPerformanceScores(date: Date): Promise<Record<string, number>> {
+  // Get performance scores
+  async getPerformanceScores(date: Date) {
     const dateStr = date.toISOString().split('T')[0];
-
-    const { data, error } = await supabaseClient
+    const { data } = await supabaseClient
       .from('performance_scores')
       .select('*')
       .eq('date', dateStr);
-
-    if (error) {
-      console.error('Error fetching scores:', error);
-      return {};
-    }
 
     const scores: Record<string, number> = {};
     (data || []).forEach((row: any) => {
       scores[row.staff_key] = row.total_score;
     });
-
     return scores;
   }
 
+  // Add activity
   async addActivity(actor: string, type: string, title: string, details: any) {
-    const { error } = await supabaseClient
-      .from('activities')
-      .insert({
-        actor_key: actor,
-        activity_type: type,
-        title,
-        details,
-      });
-
-    if (error) {
-      console.error('Error adding activity:', error);
-    }
+    await supabaseClient.from('activities').insert({
+      actor_key: actor,
+      activity_type: type,
+      title,
+      details,
+    });
   }
 
+  // Update score
   async updateScore(staffKey: string, date: Date, scoreData: any) {
     const dateStr = date.toISOString().split('T')[0];
-
-    const { error } = await supabaseClient
-      .from('performance_scores')
-      .upsert(
-        {
-          staff_key: staffKey,
-          date: dateStr,
-          ...scoreData,
-        },
-        { onConflict: 'staff_key,date' }
-      );
-
-    if (error) {
-      console.error('Error updating score:', error);
-    }
+    await supabaseClient.from('performance_scores').upsert({
+      staff_key: staffKey,
+      date: dateStr,
+      ...scoreData,
+    });
   }
 
-  /**
-   * Subscribe to real-time activities (Supabase v2 syntax)
-   */
+  // Real-time subscribe to activities
   subscribeToActivities(callback: (activity: Activity) => void) {
-    const channel = supabaseClient.channel('activities-channel')
+    return supabaseClient
+      .channel('activities')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'activities' },
         (payload: any) => {
-          const activity: Activity = {
+          callback({
             id: payload.new.id,
             timestamp: new Date(payload.new.created_at),
             actor: payload.new.actor_key,
             type: payload.new.activity_type,
             data: payload.new.details || {},
             animate: true,
-          };
-          callback(activity);
+          });
         }
       )
-      .subscribe((status) => {
-        console.log(`Activities subscription: ${status}`);
-      });
-
-    return channel;
+      .subscribe();
   }
 
-  /**
-   * Subscribe to performance score updates (Supabase v2 syntax)
-   */
+  // Real-time subscribe to scores
   subscribeToScores(callback: (data: any) => void) {
-    const channel = supabaseClient.channel('scores-channel')
+    return supabaseClient
+      .channel('scores')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'performance_scores' },
-        (payload: any) => {
-          callback(payload.new);
-        }
+        (payload: any) => callback(payload.new)
       )
-      .subscribe((status) => {
-        console.log(`Scores subscription: ${status}`);
-      });
-
-    return channel;
+      .subscribe();
   }
 
-  /**
-   * Log Telegram message
-   */
+  // Log Telegram message
   async logTelegramMessage(
     telegramId: number,
     userName: string,
@@ -180,30 +119,14 @@ export class SupabaseAPI {
     action: string,
     status: string
   ) {
-    const { error } = await supabaseClient
-      .from('telegram_logs')
-      .insert({
-        telegram_id: telegramId,
-        user_name: userName,
-        message,
-        action,
-        status,
-      });
-
-    if (error) {
-      console.error('Error logging Telegram message:', error);
-    }
-  }
-
-  /**
-   * Cleanup subscriptions
-   */
-  async unsubscribeAll() {
-    // Supabase v2: channels auto-cleanup, atau manual unsubscribe
-    // For now, just log cleanup
-    console.log('All subscriptions cleaned up');
+    await supabaseClient.from('telegram_logs').insert({
+      telegram_id: telegramId,
+      user_name: userName,
+      message,
+      action,
+      status,
+    });
   }
 }
 
-// Export singleton
 export const supabaseAPI = new SupabaseAPI();
