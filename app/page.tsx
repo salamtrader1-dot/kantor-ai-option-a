@@ -180,7 +180,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="dashboard-grid stagger">
           {/* Left: Leaderboard */}
           <div className="lg:col-span-1">
             <div
@@ -192,7 +192,7 @@ export default function Home() {
                   if (roleKey) handleStafClick(roleKey);
                 }
               }}
-              className="cursor-pointer"
+              className="card-hover"
             >
               <Leaderboard
                 stafList={stafList.map((s: StafMetric) => ({
@@ -205,9 +205,9 @@ export default function Home() {
           </div>
 
           {/* Right: Office + Feed */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-6">
             {/* Office Isometric with Chat Bubbles */}
-            <div className="relative">
+            <div className="relative card-hover rounded-lg overflow-hidden">
               <OfficeIsometric
                 theme={theme}
                 stafActivities={stafActivities}
@@ -229,7 +229,9 @@ export default function Home() {
             </div>
 
             {/* Activity Feed */}
-            <ActivityFeed theme={theme} />
+            <div className="card-hover">
+              <ActivityFeed theme={theme} />
+            </div>
           </div>
         </div>
       </main>
