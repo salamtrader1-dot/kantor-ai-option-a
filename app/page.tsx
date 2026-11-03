@@ -4,13 +4,27 @@ import React, { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/Leaderboard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { OfficeIsometric } from '@/components/OfficeIsometric';
+import { ChatBubble } from '@/components/ChatBubble';
 import { useKantorStore } from '@/lib/store/kantorStore';
 import { generateMockData, getLeaderboardMetrics } from '@/lib/mockDataGenerator';
-import { StafMetric, Activity } from '@/lib/types';
+import { playSound } from '@/lib/soundEffects';
+import { StafMetric } from '@/lib/types';
 
 export default function Home() {
   const [stafList, setStafList] = useState<StafMetric[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [selectedStaf, setSelectedStaf] = useState<string | null>(null);
+  const [chatBubbles, setChatBubbles] = useState<Record<string, string>>({});
+  const [stafActivities, setStafActivities] = useState<Record<string, string>>({
+    fathi: 'searching',
+    qela: 'typing',
+    angel: 'idle',
+    cindy: 'on_call',
+    faza: 'idle',
+    nana: 'idle',
+    cika: 'idle',
+    salam: 'idle',
+  });
   const { theme, toggleTheme } = useKantorStore();
 
   useEffect(() => {
@@ -52,11 +66,79 @@ export default function Home() {
     );
 
     setStafList(stafArray);
+
+    // Simulate random activities every 10 seconds
+    const activityInterval = setInterval(() => {
+      const roles = Object.keys(stafActivities);
+      const randomRole = roles[Math.floor(Math.random() * roles.length)];
+      const activities = ['idle', 'searching', 'typing', 'on_call', 'celebrating'];
+      const randomActivity =
+        activities[Math.floor(Math.random() * activities.length)];
+
+      setStafActivities((prev) => ({
+        ...prev,
+        [randomRole]: randomActivity,
+      }));
+
+      // Play sound on activity change
+      if (randomActivity === 'celebrating') {
+        playSound('celebrate');
+      } else if (randomActivity === 'typing') {
+        playSound('typing');
+      }
+
+      // Add chat bubble
+      const messages: Record<string, string> = {
+        fathi: '🔎 Found leads!',
+        qela: '💬 Replying...',
+        angel: '📥 New lead!',
+        cindy: '📱 Following up...',
+        faza: '✍️ Creating content',
+        nana: '🧑‍💼 Planning...',
+        cika: '📊 Analyzing...',
+        salam: '👑 Reviewing...',
+      };
+
+      setChatBubbles((prev) => ({
+        ...prev,
+        [randomRole]: messages[randomRole] || 'Working...',
+      }));
+
+      // Remove chat bubble after 2 seconds
+      setTimeout(() => {
+        setChatBubbles((prev) => {
+          const updated = { ...prev };
+          delete updated[randomRole];
+          return updated;
+        });
+      }, 2000);
+    }, 10000);
+
+    return () => clearInterval(activityInterval);
   }, []);
 
   if (!mounted) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
+
+  const handleStafClick = (roleKey: string) => {
+    setSelectedStaf(roleKey);
+    playSound('approval');
+
+    // Trigger celebration animation
+    setStafActivities((prev) => ({
+      ...prev,
+      [roleKey]: 'celebrating',
+    }));
+
+    // Reset after 2 seconds
+    setTimeout(() => {
+      setStafActivities((prev) => ({
+        ...prev,
+        [roleKey]: 'idle',
+      }));
+    }, 2000);
+  };
 
   return (
     <div
@@ -99,22 +181,50 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Leaderboard */}
           <div className="lg:col-span-1">
-            <Leaderboard stafList={stafList} theme={theme} />
+            <div
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                const card = target.closest('[data-staf]');
+                if (card) {
+                  const roleKey = card.getAttribute('data-staf');
+                  if (roleKey) handleStafClick(roleKey);
+                }
+              }}
+              className="cursor-pointer"
+            >
+              <Leaderboard
+                stafList={stafList.map((s) => ({
+                  ...s,
+                  animating: selectedStaf === s.role_key,
+                }))}
+                theme={theme}
+              />
+            </div>
           </div>
 
           {/* Right: Office + Feed */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Office Isometric */}
-            <OfficeIsometric theme={theme} stafActivities={{
-              fathi: 'searching',
-              qela: 'typing',
-              angel: 'idle',
-              cindy: 'on_call',
-              faza: 'idle',
-              nana: 'idle',
-              cika: 'idle',
-              salam: 'idle',
-            }} />
+            {/* Office Isometric with Chat Bubbles */}
+            <div className="relative">
+              <OfficeIsometric
+                theme={theme}
+                stafActivities={stafActivities}
+              />
+
+              {/* Chat Bubbles Overlay */}
+              {Object.entries(chatBubbles).map(([roleKey, message]) => (
+                <ChatBubble
+                  key={`bubble-${roleKey}`}
+                  message={message}
+                  actor={roleKey}
+                  theme={theme}
+                  position={{
+                    x: Math.random() * 200 + 100,
+                    y: Math.random() * 150 + 80,
+                  }}
+                />
+              ))}
+            </div>
 
             {/* Activity Feed */}
             <ActivityFeed theme={theme} />
@@ -127,7 +237,7 @@ export default function Home() {
         className={`${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'} border-t mt-12`}
       >
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
-          <p>Kantor AI Virtual — Option A | Day 1/12 ✅ | Mock data stream active</p>
+          <p>Kantor AI Virtual — Option A | Day 3/12 ✅ | Chat bubbles + Sound + Click staff!</p>
         </div>
       </footer>
     </div>
