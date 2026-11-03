@@ -37,12 +37,21 @@ export const exportToCSV = (data: any[], filename: string) => {
 };
 
 export const exportActivitiesToCSV = (activities: Activity[]) => {
+  const typeLabels: Record<string, string> = {
+    lead_found: '🔎 Lead Found',
+    draft_created: '📝 Draft Created',
+    approved: '✅ Approved',
+    deal_closed: '🎉 Deal Closed',
+    report: '📊 Report',
+    on_call: '📱 On Call',
+    typing: '⌨️ Typing',
+  };
+
   const data = activities.map((a) => ({
     timestamp: new Date(a.timestamp).toLocaleString(),
     actor: a.actor,
-    type: a.type,
-    title: a.title,
-    details: a.details || '',
+    type: typeLabels[a.type] || a.type,
+    details: JSON.stringify(a.data),
   }));
 
   exportToCSV(data, `kantor-activities-${new Date().toISOString().split('T')[0]}`);
